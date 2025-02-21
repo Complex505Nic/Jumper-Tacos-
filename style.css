@@ -1,14 +1,16 @@
 body {
   margin: 0;
   overflow: hidden;
-  font-family: Arial, sans-serif;
+  font-family: "San Francisco", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background-color: #f5f5f5;
 }
 
 canvas {
   display: block;
 }
 
-#start-screen {
+/* Pantallas de inicio y selección con estilo iOS */
+#start-screen, #character-screen {
   position: absolute;
   top: 0;
   left: 0;
@@ -20,26 +22,125 @@ canvas {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: #fff;
   text-align: center;
 }
 
-#start-screen input, 
-#start-screen button {
-  margin: 10px;
-  padding: 10px;
-  font-size: 16px;
+#character-screen {
+  background: url('https://images4.imagebam.com/f6/b3/c0/MEZS7QX_o.png') no-repeat center center/contain;
+  display: none;
 }
 
-#game-over, 
-#level-complete {
+#start-screen .input-container,
+#character-screen .input-container {
+  position: relative;
+  width: 90%;
+  max-width: 350px;
+  margin: 20vh auto 0 auto;
+}
+
+/* Input centrado y de 240px (aprox. 20% más ancho que botones de 200px) */
+.input-container input {
+  width: 240px;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  margin-bottom: 20px;
+  outline: none;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Botones en la pantalla de inicio */
+.buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.buttons-container button {
+  background-color: #007AFF;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s ease;
+  max-width: 200px;
+  width: 100%;
+}
+
+.buttons-container button:hover {
+  background-color: #0051a8;
+}
+
+/* Pantalla de selección de personajes */
+.characters-grid {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.character-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.character-item img {
+  cursor: pointer;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.character-item img.selected {
+  border: 3px solid #fff;
+}
+
+.character-item span {
+  margin-top: 8px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.btn-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn-container button {
+  background-color: #007AFF;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s ease;
+}
+
+/* Pantallas de Game Over y Nivel Completado */
+#game-over, #level-complete {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.8);
-  color: white;
+  color: #fff;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -48,24 +149,27 @@ canvas {
   display: none;
 }
 
-#game-over button, 
-#level-complete button {
-  padding: 10px 20px;
+#game-over button, #level-complete button {
+  background-color: #007AFF;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
   font-size: 18px;
   cursor: pointer;
-}
-
-.input-container {
-  position: relative;
-  top: calc(50% - 15%); /* Subir un 15% */
-  transform: translateY(-50%);
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 #score-container {
   position: absolute;
   top: 10px;
   right: 10px;
-  color: white;
+  color: #fff;
   font-size: 20px;
   font-weight: bold;
+}
+
+#collision-img {
+  width: 20vw;
+  margin-bottom: 20px;
 }

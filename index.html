@@ -1,38 +1,96 @@
 <!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Untitled</title>
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Geometry Dash Style Game</title>
+  <title>Geometry Dash Style Game - Niveles</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Pantalla de inicio -->
   <div id="start-screen">
     <div class="input-container">
       <input type="text" id="player-name" placeholder="Ingresa tu nombre">
-      <div>
-        <img src="https://images4.imagebam.com/0a/51/d3/MEZR6J6_o.png" alt="Personaje 1" class="character-select" data-character="1" style="cursor: pointer; width: 100px;">
-        <img src="https://images4.imagebam.com/d2/24/c3/MEZR6JB_o.png" alt="Personaje 2" class="character-select" data-character="2" style="cursor: pointer; width: 100px;">
+      <div class="buttons-container">
+        <!-- Solo se deja el botón de seleccionar personajes -->
+        <button id="select-characters">PERSONAJES</button>
       </div>
-      <button id="start-game">Iniciar Juego</button>
     </div>
   </div>
 
+  <!-- Pantalla de selección de personajes -->
+  <div id="character-screen">
+    <div class="input-container">
+      <!-- Fila con los personajes originales: JUANITO y CHONA -->
+      <div class="characters-grid first-row">
+        <div class="character-item">
+          <img src="https://images4.imagebam.com/0a/51/d3/MEZR6J6_o.png" alt="JUANITO" class="new-character" data-character="juanito">
+          <span>JUANITO</span>
+        </div>
+        <div class="character-item">
+          <img src="https://images4.imagebam.com/d2/24/c3/MEZR6JB_o.png" alt="CHONA" class="new-character" data-character="chona">
+          <span>CHONA</span>
+        </div>
+      </div>
+      <!-- Fila con otros personajes -->
+      <div class="characters-grid second-row">
+        <div class="character-item">
+          <img src="https://images4.imagebam.com/df/99/a5/MEZS853_o.png" alt="CUTTIE" class="new-character" data-character="cuttie">
+          <span>CUTTIE</span>
+        </div>
+        <div class="character-item">
+          <img src="https://images4.imagebam.com/c6/07/9d/MEZS86F_o.png" alt="GOOD BOI" class="new-character" data-character="goodboi">
+          <span>GOOD BOI</span>
+        </div>
+      </div>
+      <div class="characters-grid third-row">
+        <div class="character-item">
+          <img src="https://images4.imagebam.com/6a/3a/43/MEZS803_o.png" alt="CRAZY FLAMES" class="new-character" data-character="crazyflames">
+          <span>CRAZY FLAMES</span>
+        </div>
+      </div>
+      <!-- Botón para entrar al juego (único en esta pantalla) -->
+      <div class="btn-container">
+        <button id="back-to-start">Volver</button>
+        <button id="enter-game">Entrar al Juego</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pantalla de Game Over -->
   <div id="game-over">
-    <h1>GAME OVER</h1>
+    <img id="collision-img" src="https://via.placeholder.com/200x200?text=Collision" alt="Collision">
     <button id="restart-level">Reiniciar Nivel</button>
   </div>
 
+  <!-- Pantalla de Nivel Completado -->
   <div id="level-complete">
     <h1>FELICIDADES</h1>
-    <p>Has recolectado <span id="score-display">10</span> tacos.</p>
+    <p>Has recolectado <span id="final-score">0</span> tacos.</p>
+    <!-- Si se completa el nivel 2, el botón dirá "MENU" -->
     <button id="next-level">Siguiente Nivel</button>
   </div>
 
-  <div id="score-container">Tacos: <span id="score-display">0</span></div>
+  <!-- Contador de tacos -->
+  <div id="score-container">Tacos: <span id="score-counter">0</span></div>
 
   <canvas id="game-canvas"></canvas>
 
   <script src="script.js"></script>
+</body>
+</html>
+<!-- partial -->
+  <script  src="./script.js"></script>
+
 </body>
 </html>
