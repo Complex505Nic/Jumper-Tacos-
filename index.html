@@ -2,7 +2,7 @@
 <html lang="en" >
 <head>
   <meta charset="UTF-8">
-  <title>Untitled</title>
+  <title>jumper 3.0 ultimate</title>
   <link rel="stylesheet" href="./style.css">
 
 </head>
@@ -22,7 +22,7 @@
     <div class="input-container">
       <input type="text" id="player-name" placeholder="Ingresa tu nombre">
       <div class="buttons-container">
-        <!-- Solo se deja el botón de seleccionar personajes -->
+        <!-- Sólo se muestra el botón de "PERSONAJES" -->
         <button id="select-characters">PERSONAJES</button>
       </div>
     </div>
@@ -31,7 +31,7 @@
   <!-- Pantalla de selección de personajes -->
   <div id="character-screen">
     <div class="input-container">
-      <!-- Fila con los personajes originales: JUANITO y CHONA -->
+      <!-- Fila con los personajes originales -->
       <div class="characters-grid first-row">
         <div class="character-item">
           <img src="https://images4.imagebam.com/0a/51/d3/MEZR6J6_o.png" alt="JUANITO" class="new-character" data-character="juanito">
@@ -59,7 +59,7 @@
           <span>CRAZY FLAMES</span>
         </div>
       </div>
-      <!-- Botón para entrar al juego (único en esta pantalla) -->
+      <!-- Botones de la selección -->
       <div class="btn-container">
         <button id="back-to-start">Volver</button>
         <button id="enter-game">Entrar al Juego</button>
@@ -70,19 +70,24 @@
   <!-- Pantalla de Game Over -->
   <div id="game-over">
     <img id="collision-img" src="https://via.placeholder.com/200x200?text=Collision" alt="Collision">
-    <button id="restart-level">Reiniciar Nivel</button>
+    <div class="btn-container">
+      <button id="restart-level">Reiniciar Nivel</button>
+      <button id="menu-button">MENU</button>
+    </div>
   </div>
 
   <!-- Pantalla de Nivel Completado -->
   <div id="level-complete">
     <h1>FELICIDADES</h1>
     <p>Has recolectado <span id="final-score">0</span> tacos.</p>
-    <!-- Si se completa el nivel 2, el botón dirá "MENU" -->
     <button id="next-level">Siguiente Nivel</button>
   </div>
 
   <!-- Contador de tacos -->
   <div id="score-container">Tacos: <span id="score-counter">0</span></div>
+
+  <!-- Overlay para el countdown -->
+  <div id="countdown" style="display: none;"></div>
 
   <canvas id="game-canvas"></canvas>
 

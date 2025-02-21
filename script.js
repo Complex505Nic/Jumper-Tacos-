@@ -1,28 +1,27 @@
 /* 
-  Juego estilo Geometry Dash con las siguientes modificaciones:
-  1. La velocidad del juego se mantiene constante (gameSpeed se fija en 2) y se evita iniciar loops duplicados.
-  2. Los objetos en movimiento se crean 5 veces más grandes (525px en vez de 105px).
-  3. Al colisionar con un objeto en movimiento se muestra el efecto “humo” (imagen fade) durante 0.5 segundos y luego se elimina el objeto.
-  4. La colisión se verifica usando un offset de 10px (igual que para “chile” y “cactus”).
-  5. Si el jugador colisiona con un obstáculo del piso, se detiene el juego inmediatamente (pausando la animación) y se muestra la pantalla de Game Over.
-  6. En la pantalla de inicio solo aparece el botón “PERSONAJES” (en la selección se encuentra “Entrar al Juego”).
-  7. Al finalizar el nivel 2, el botón muestra “MENU” para volver al menú principal (reiniciando el nivel a 1).
+  En esta versión se aplica un factor de escala (scaleFactor) a todos los elementos del juego (jugador, obstáculos, tacos y objetos en movimiento) en el canvas, reduciéndolos en un 25% (multiplicando por 0.75) en dispositivos móviles (window.innerWidth < 768). La pantalla inicial y de selección permanecen iguales.
+
+  Además:
+  - Todos los elementos usan el mismo hitbox (HITBOX_OFFSET) proporcional al scaleFactor.
+  - Los objetos en movimiento se generan centrados horizontalmente y con un componente horizontal aleatorio (dx) para que se muevan diagonalmente.
+  - Se muestra un countdown de 3 segundos antes de iniciar cada nivel.
+  - En Game Over se muestran dos botones ("Reiniciar Nivel" y "MENU"). Al pulsar "MENU", se cancela la animación y se vuelve al menú principal (permitiendo cambiar nombre o personaje) y el juego se detiene completamente.
+  - En el nivel 2, los objetos "NFL" y "FUTBOL" se generan al 40% del tamaño normal.
 */
 
-// Variable global para almacenar el id del animation frame
+const scaleFactor = window.innerWidth < 768 ? 0.75 : 1;
+const HITBOX_OFFSET = 10 * scaleFactor;
+
 let animationFrameId = null;
 
-// Se adjuntan los event listeners de salto UNA SOLA VEZ:
 window.addEventListener('mousedown', handleJump);
 window.addEventListener('keydown', handleJump);
 
-// Configuración del canvas
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Elementos de la interfaz
 const startScreen = document.getElementById('start-screen');
 const characterScreen = document.getElementById('character-screen');
 const playerNameInput = document.getElementById('player-name');
@@ -32,36 +31,34 @@ const enterGameButton = document.getElementById('enter-game');
 const newCharacterImages = document.querySelectorAll('.new-character');
 const gameOverScreen = document.getElementById('game-over');
 const restartLevelButton = document.getElementById('restart-level');
+const menuButton = document.getElementById('menu-button');
 const levelCompleteScreen = document.getElementById('level-complete');
 const nextLevelButton = document.getElementById('next-level');
 const scoreDisplay = document.getElementById('score-counter');
+const countdownDiv = document.getElementById('countdown');
 
-// Variables del juego
 let playerName = '';
-let selectedCharacter = "juanito"; 
+let selectedCharacter = "juanito";
 let isGameStarted = false;
 let score = 0;
-let gameSpeed = 2; // Se mantiene en 2
+let gameSpeed = 2;
 let obstacles = [];
 let tacos = [];
 let movingObstacles = [];
 let currentLevel = 1;
 
-// Velocidad base vertical
 const meteorSpeed = 3.15;
 
-// Variables para spawns en nivel 2
 let obstacleSpawnCounter = 0;
 const obstacleSpawnInterval = 300;
 let spawnedMeteorFire = 0, spawnedMeteorSimple = 0, spawnedNFL = 0, spawnedFutbol = 0;
 const desiredMeteorFire = 6, desiredMeteorSimple = 4, desiredNFL = 5, desiredFutbol = 4;
 
-// Pre-cargar imágenes
 const images = {
   background: new Image(),
   background2: new Image(),
-  player1: new Image(),   // JUANITO
-  player2: new Image(),   // CHONA
+  player1: new Image(),
+  player2: new Image(),
   obstacleChile: new Image(),
   obstacleCactus: new Image(),
   taco: new Image(),
@@ -69,7 +66,7 @@ const images = {
   meteoritoSimple: new Image(),
   nfl: new Image(),
   futbol: new Image(),
-  fade: new Image()       // Imagen “humo”
+  fade: new Image()
 };
 
 images.background.src = 'https://images4.imagebam.com/62/11/37/MEZS0HQ_o.png';
@@ -85,21 +82,19 @@ images.nfl.src = 'https://images4.imagebam.com/85/e5/21/MEZS6SX_o.png';
 images.futbol.src = 'https://images4.imagebam.com/ee/bd/37/MEZS6S2_o.png';
 images.fade.src = 'https://images4.imagebam.com/87/fd/bb/MEZS9D0_o.png';
 
-// Configuración del jugador (tamaño unificado: 105×105)
 let player = {
   x: 100,
   y: 5,
-  width: 105,
-  height: 105,
+  width: 105 * scaleFactor,
+  height: 105 * scaleFactor,
   velocityY: 0,
   rotation: 0,
   canDoubleJump: true,
   isJumping: false,
-  hitboxOffsetX: 10,
-  hitboxOffsetY: 10
+  hitboxOffsetX: HITBOX_OFFSET,
+  hitboxOffsetY: HITBOX_OFFSET
 };
 
-// Selección de personajes
 newCharacterImages.forEach(img => {
   img.addEventListener('click', () => {
     selectedCharacter = img.dataset.character;
@@ -108,7 +103,6 @@ newCharacterImages.forEach(img => {
   });
 });
 
-// Botones de la interfaz
 selectCharactersButton.addEventListener('click', () => {
   if (playerNameInput.value.trim() === '') {
     alert('Por favor, ingresa tu nombre.');
@@ -125,35 +119,44 @@ backToStartButton.addEventListener('click', () => {
 });
 
 enterGameButton.addEventListener('click', () => {
-  // Al entrar al juego desde la selección, iniciamos el juego
   characterScreen.style.display = 'none';
   startGame();
 });
 
+// Botón "MENU" en Game Over: Cancela el juego, limpia el canvas y muestra el menú principal
+menuButton.addEventListener('click', () => {
+  isGameStarted = false;
+  cancelAnimationFrame(animationFrameId);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  startScreen.style.display = 'flex';
+  // Permitir modificar el nombre y seleccionar personaje (no reiniciamos currentLevel)
+});
+
+// Botón "Reiniciar Nivel" en Game Over
 restartLevelButton.addEventListener('click', () => {
   gameOverScreen.style.display = 'none';
   resetGame();
 });
 
+// Botón "Siguiente Nivel" en Nivel Completado
 nextLevelButton.addEventListener('click', () => {
   levelCompleteScreen.style.display = 'none';
   if (currentLevel === 1) {
     currentLevel = 2;
     resetGame();
   } else if (currentLevel === 2) {
-    currentLevel = 1;
-    startScreen.style.display = 'flex';
+    // Al terminar nivel 2, reinicia nivel 2 (no cambia al menú)
+    resetGame();
   }
 });
 
 function startGame() {
   startScreen.style.display = 'none';
-  isGameStarted = true;
+  isGameStarted = false; // Mostramos el countdown antes de iniciar
   initGame();
 }
 
 function initGame() {
-  // Cancelar cualquier frame pendiente para evitar duplicados
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
   if (currentLevel === 2) {
     spawnedMeteorFire = 0;
@@ -163,7 +166,7 @@ function initGame() {
   }
   generateObstacles();
   generateTacos();
-  animationFrameId = requestAnimationFrame(update);
+  startLevelWithCountdown();
 }
 
 function resetGame() {
@@ -176,13 +179,11 @@ function resetGame() {
   player.canDoubleJump = true;
   player.isJumping = false;
   
-  // Reiniciar arrays de objetos
   obstacles = [];
   tacos = [];
   movingObstacles = [];
   obstacleSpawnCounter = 0;
   
-  // Reiniciar contadores en nivel 2
   if (currentLevel === 2) {
     spawnedMeteorFire = 0;
     spawnedMeteorSimple = 0;
@@ -191,16 +192,35 @@ function resetGame() {
   }
   
   score = 0;
-  gameSpeed = 2; // Se fija en 2 siempre
+  gameSpeed = 2;
   scoreDisplay.textContent = score;
   generateObstacles();
   generateTacos();
-  animationFrameId = requestAnimationFrame(update);
+  
+  isGameStarted = false;
+  startLevelWithCountdown();
+}
+
+function startLevelWithCountdown() {
+  countdownDiv.style.display = 'flex';
+  let count = 3;
+  countdownDiv.textContent = count;
+  let interval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countdownDiv.textContent = count;
+    } else {
+      clearInterval(interval);
+      countdownDiv.style.display = 'none';
+      isGameStarted = true;
+      animationFrameId = requestAnimationFrame(update);
+    }
+  }, 1000);
 }
 
 function generateObstacles() {
-  const obsWidth = 105;
-  const obsHeight = 105;
+  const obsWidth = 105 * scaleFactor;
+  const obsHeight = 105 * scaleFactor;
   const ground = canvas.height - 50;
   for (let i = 0; i < 20; i++) {
     const type = Math.random() < 0.5 ? 'chile' : 'cactus';
@@ -210,38 +230,37 @@ function generateObstacles() {
       y: ground - obsHeight,
       width: obsWidth,
       height: obsHeight,
-      hitboxOffsetX: 10,
-      hitboxOffsetY: 10
+      hitboxOffsetX: HITBOX_OFFSET,
+      hitboxOffsetY: HITBOX_OFFSET
     });
   }
 }
 
 function generateTacos() {
   const tacoCount = currentLevel === 1 ? 15 : 22;
+  const tacoSize = 105 * scaleFactor;
   for (let i = 0; i < tacoCount; i++) {
     tacos.push({
       x: 800 + i * 400 + Math.random() * 200,
       y: Math.random() > 0.5 ? 450 : 200,
-      width: 105,
-      height: 105
+      width: tacoSize,
+      height: tacoSize
     });
   }
 }
 
 function update() {
-  // Si el juego ya no está activo, detener el loop
   if (!isGameStarted) return;
-  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // Fondo según nivel
+  // Fondo
   if (currentLevel === 2) {
     ctx.drawImage(images.background2, 0, 0, canvas.width, canvas.height);
   } else {
     ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
   }
   
-  // Obstáculos del suelo
+  // Obstáculos del piso
   obstacles.forEach(obstacle => {
     obstacle.x -= gameSpeed;
     if (obstacle.x + obstacle.width < 0) {
@@ -250,16 +269,14 @@ function update() {
     const obsImg = obstacle.type === 'chile' ? images.obstacleChile : images.obstacleCactus;
     ctx.drawImage(obsImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
     
-    // Colisión con obstáculos del suelo (hitbox offset de 10)
     if (
-      player.x + player.hitboxOffsetX < obstacle.x + obstacle.width - obstacle.hitboxOffsetY &&
-      player.x + player.width - player.hitboxOffsetX > obstacle.x + obstacle.hitboxOffsetX &&
-      player.y + player.hitboxOffsetY < obstacle.y + obstacle.height - obstacle.hitboxOffsetY &&
-      player.y + player.height - player.hitboxOffsetY > obstacle.y + obstacle.hitboxOffsetY
+      player.x + player.hitboxOffsetX < obstacle.x + obstacle.width - HITBOX_OFFSET &&
+      player.x + player.width - player.hitboxOffsetX > obstacle.x + HITBOX_OFFSET &&
+      player.y + player.hitboxOffsetY < obstacle.y + obstacle.height - HITBOX_OFFSET &&
+      player.y + player.height - player.hitboxOffsetY > obstacle.y + HITBOX_OFFSET
     ) {
-      // Cuando colisiona con un obstáculo del piso, se detiene el juego y se reinicia
       gameOver();
-      return; // Salir de update para evitar seguir corriendo
+      return;
     }
   });
   
@@ -292,14 +309,13 @@ function update() {
     obstacleSpawnCounter = 0;
     if (currentLevel === 1) {
       let type = Math.random() < 0.5 ? 'simple' : 'fire';
-      // Objeto 5 veces más grande: 525px
       movingObstacles.push({
         type: type,
-        x: Math.random() * (canvas.width - 525),
+        x: canvas.width / 2 - (525 * scaleFactor) / 2,
         y: -Math.random() * 200,
-        width: 525,
-        height: 525,
-        dx: 0,
+        width: 525 * scaleFactor,
+        height: 525 * scaleFactor,
+        dx: (Math.random() * (2 * meteorSpeed)) - meteorSpeed,
         faded: false
       });
     } else if (currentLevel === 2) {
@@ -312,19 +328,20 @@ function update() {
         let type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
         let obs = { type: type, faded: false };
         if (type === 'simple' || type === 'fire') {
-          obs.x = Math.random() * (canvas.width - 525);
+          obs.x = canvas.width / 2 - (525 * scaleFactor) / 2;
           obs.y = -Math.random() * 200;
-          obs.width = 525;
-          obs.height = 525;
-          obs.dx = Math.random() < 0.5 ? -meteorSpeed : 0;
+          obs.width = 525 * scaleFactor;
+          obs.height = 525 * scaleFactor;
+          obs.dx = (Math.random() * (2 * meteorSpeed)) - meteorSpeed;
           if (type === 'fire') spawnedMeteorFire++;
           else spawnedMeteorSimple++;
         } else if (type === 'NFL' || type === 'FUTBOL') {
-          obs.x = Math.random() * (canvas.width - 525);
+          const reducedSize = 525 * 0.4 * scaleFactor; // 210 * scaleFactor
+          obs.x = canvas.width / 2 - reducedSize / 2;
           obs.y = canvas.height + Math.random() * 200;
-          obs.width = 525;
-          obs.height = 525;
-          obs.dx = 0;
+          obs.width = reducedSize;
+          obs.height = reducedSize;
+          obs.dx = (Math.random() * (2 * meteorSpeed)) - meteorSpeed;
           if (type === 'NFL') spawnedNFL++;
           else spawnedFutbol++;
         }
@@ -345,45 +362,34 @@ function update() {
       obs.y -= meteorSpeed;
     }
     
-    // Seleccionar imagen: si ya se activó el efecto “humo”, usar images.fade
     let obsImg = obs.faded ? images.fade :
-                 (obs.type === 'fire' ? images.meteoritoFire :
-                  (obs.type === 'simple' ? images.meteoritoSimple :
-                   (obs.type === 'NFL' ? images.nfl :
-                    (obs.type === 'FUTBOL' ? images.futbol : images.meteoritoSimple))));
+      (obs.type === 'fire' ? images.meteoritoFire :
+       (obs.type === 'simple' ? images.meteoritoSimple :
+        (obs.type === 'NFL' ? images.nfl :
+         (obs.type === 'FUTBOL' ? images.futbol : images.meteoritoSimple))));
     ctx.drawImage(obsImg, obs.x, obs.y, obs.width, obs.height);
     
-    // Colisión con objetos en movimiento (hitbox offset de 10)
     if (
-      player.x + player.hitboxOffsetX < obs.x + obs.width - 10 &&
-      player.x + player.width - player.hitboxOffsetX > obs.x + 10 &&
-      player.y + player.hitboxOffsetY < obs.y + obs.height - 10 &&
-      player.y + player.height - player.hitboxOffsetY > obs.y + 10
+      player.x + player.hitboxOffsetX < obs.x + obs.width - HITBOX_OFFSET &&
+      player.x + player.width - player.hitboxOffsetX > obs.x + HITBOX_OFFSET &&
+      player.y + player.hitboxOffsetY < obs.y + obs.height - HITBOX_OFFSET &&
+      player.y + player.height - player.hitboxOffsetY > obs.y + HITBOX_OFFSET
     ) {
       if (!obs.faded) {
-        obs.faded = true; // Activar efecto “humo”
-        if (obs.type === 'fire') {
-          score -= 2;
-        } else if (obs.type === 'simple') {
-          score -= 1;
-        } else if (obs.type === 'NFL') {
-          score -= 2;
-        } else if (obs.type === 'FUTBOL') {
-          score -= 4;
-        }
+        obs.faded = true;
+        if (obs.type === 'fire') score -= 2;
+        else if (obs.type === 'simple') score -= 1;
+        else if (obs.type === 'NFL') score -= 2;
+        else if (obs.type === 'FUTBOL') score -= 4;
         scoreDisplay.textContent = score;
-        // Después de 0.5 segundos se elimina el objeto
         setTimeout(() => {
           let index = movingObstacles.indexOf(obs);
-          if (index > -1) {
-            movingObstacles.splice(index, 1);
-          }
+          if (index > -1) movingObstacles.splice(index, 1);
         }, 500);
       }
       continue;
     }
     
-    // Eliminar objetos fuera del área de juego
     if (currentLevel === 1 && obs.y > canvas.height) {
       movingObstacles.splice(i, 1);
     }
@@ -397,7 +403,7 @@ function update() {
     }
   }
   
-  // Actualizar al jugador (gravedad)
+  // Actualizar jugador (gravedad)
   player.velocityY += 0.5;
   player.y += player.velocityY;
   if (player.y + player.height > canvas.height - 50) {
@@ -407,20 +413,16 @@ function update() {
     player.isJumping = false;
   }
   
-  // Rotación del jugador durante el salto
   if (player.isJumping) {
     player.rotation += 5;
   } else {
     player.rotation = 0;
   }
   
-  // Dibujar al jugador
   let playerImg;
-  if (selectedCharacter === "juanito") {
-    playerImg = images.player1;
-  } else if (selectedCharacter === "chona") {
-    playerImg = images.player2;
-  } else if (selectedCharacter === "cuttie") {
+  if (selectedCharacter === "juanito") playerImg = images.player1;
+  else if (selectedCharacter === "chona") playerImg = images.player2;
+  else if (selectedCharacter === "cuttie") {
     let imgElem = document.querySelector('img[data-character="cuttie"]');
     playerImg = new Image();
     playerImg.src = imgElem.src;
@@ -437,9 +439,9 @@ function update() {
   }
   
   ctx.save();
-  ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+  ctx.translate(player.x + player.width/2, player.y + player.height/2);
   ctx.rotate((player.rotation * Math.PI) / 180);
-  ctx.drawImage(playerImg, -player.width / 2, -player.height / 2, player.width, player.height);
+  ctx.drawImage(playerImg, -player.width/2, -player.height/2, player.width, player.height);
   ctx.restore();
   
   animationFrameId = requestAnimationFrame(update);
@@ -463,6 +465,8 @@ function gameOver() {
   isGameStarted = false;
   cancelAnimationFrame(animationFrameId);
   gameOverScreen.style.display = 'flex';
+  menuButton.style.display = 'block';
+  restartLevelButton.style.display = 'block';
 }
 
 function levelComplete() {
