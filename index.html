@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geometry Dash Style Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="start-screen">
+    <div class="input-container">
+      <input type="text" id="player-name" placeholder="Ingresa tu nombre">
+      <div>
+        <img src="https://images4.imagebam.com/0a/51/d3/MEZR6J6_o.png" alt="Personaje 1" class="character-select" data-character="1" style="cursor: pointer; width: 100px;">
+        <img src="https://images4.imagebam.com/d2/24/c3/MEZR6JB_o.png" alt="Personaje 2" class="character-select" data-character="2" style="cursor: pointer; width: 100px;">
+      </div>
+      <button id="start-game">Iniciar Juego</button>
+    </div>
+  </div>
+
+  <div id="game-over">
+    <h1>GAME OVER</h1>
+    <button id="restart-level">Reiniciar Nivel</button>
+  </div>
+
+  <div id="level-complete">
+    <h1>FELICIDADES</h1>
+    <p>Has recolectado <span id="score-display">10</span> tacos.</p>
+    <button id="next-level">Siguiente Nivel</button>
+  </div>
+
+  <div id="score-container">Tacos: <span id="score-display">0</span></div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <script src="script.js"></script>
+</body>
+</html>
