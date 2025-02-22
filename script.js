@@ -1,18 +1,23 @@
 /* 
-  En esta versión se aplica un factor de escala (scaleFactor) a todos los elementos del juego (jugador, obstáculos, tacos y objetos en movimiento) en el canvas, reduciéndolos en un 25% (multiplicando por 0.75) en dispositivos móviles (window.innerWidth < 768). La pantalla inicial y de selección permanecen iguales.
-
-  Además:
-  - Todos los elementos usan el mismo hitbox (HITBOX_OFFSET) proporcional al scaleFactor.
-  - Los objetos en movimiento se generan centrados horizontalmente y con un componente horizontal aleatorio (dx) para que se muevan diagonalmente.
+  En esta versión se ajusta el juego para orientación horizontal, agregando scroll continuo del fondo y el piso.
+  Además, se escala (25% menos en móviles) todos los elementos del canvas (jugador, obstáculos, tacos, objetos en movimiento),
+  manteniendo la pantalla inicial y la selección de personajes sin cambios.
+  
+  - Se generan los objetos en movimiento centrados horizontalmente, con movimiento diagonal (dx aleatorio).
   - Se muestra un countdown de 3 segundos antes de iniciar cada nivel.
-  - En Game Over se muestran dos botones ("Reiniciar Nivel" y "MENU"). Al pulsar "MENU", se cancela la animación y se vuelve al menú principal (permitiendo cambiar nombre o personaje) y el juego se detiene completamente.
+  - En Game Over se muestran dos botones ("Reiniciar Nivel" y "MENU"). Al pulsar "MENU" se cancela la animación, se limpia el canvas
+    y se muestra el menú principal (donde se puede modificar el nombre o cambiar el personaje), deteniendo completamente el juego.
   - En el nivel 2, los objetos "NFL" y "FUTBOL" se generan al 40% del tamaño normal.
 */
 
+// Factor de escala para móviles (reducción del 25% si width < 768px)
 const scaleFactor = window.innerWidth < 768 ? 0.75 : 1;
 const HITBOX_OFFSET = 10 * scaleFactor;
 
 let animationFrameId = null;
+let bgOffset = 0;
+let bgOffset2 = 0;
+let floorOffset = 0;
 
 window.addEventListener('mousedown', handleJump);
 window.addEventListener('keydown', handleJump);
@@ -41,7 +46,7 @@ let playerName = '';
 let selectedCharacter = "juanito";
 let isGameStarted = false;
 let score = 0;
-let gameSpeed = 2;
+let gameSpeed = 2; // Constante
 let obstacles = [];
 let tacos = [];
 let movingObstacles = [];
@@ -123,36 +128,34 @@ enterGameButton.addEventListener('click', () => {
   startGame();
 });
 
-// Botón "MENU" en Game Over: Cancela el juego, limpia el canvas y muestra el menú principal
 menuButton.addEventListener('click', () => {
   isGameStarted = false;
   cancelAnimationFrame(animationFrameId);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Regresar al menú sin reiniciar el nivel (se conserva el último nivel)
   startScreen.style.display = 'flex';
-  // Permitir modificar el nombre y seleccionar personaje (no reiniciamos currentLevel)
+  // Permitir modificar nombre y personaje
 });
 
-// Botón "Reiniciar Nivel" en Game Over
 restartLevelButton.addEventListener('click', () => {
   gameOverScreen.style.display = 'none';
   resetGame();
 });
 
-// Botón "Siguiente Nivel" en Nivel Completado
 nextLevelButton.addEventListener('click', () => {
   levelCompleteScreen.style.display = 'none';
   if (currentLevel === 1) {
     currentLevel = 2;
     resetGame();
   } else if (currentLevel === 2) {
-    // Al terminar nivel 2, reinicia nivel 2 (no cambia al menú)
+    // No existe nivel 3: se reinicia el nivel 2
     resetGame();
   }
 });
 
 function startGame() {
   startScreen.style.display = 'none';
-  isGameStarted = false; // Mostramos el countdown antes de iniciar
+  isGameStarted = false; // Mostrar countdown antes de iniciar
   initGame();
 }
 
@@ -171,7 +174,6 @@ function initGame() {
 
 function resetGame() {
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  // Reiniciar estado del jugador
   player.x = 100;
   player.y = 5;
   player.velocityY = 0;
@@ -194,6 +196,7 @@ function resetGame() {
   score = 0;
   gameSpeed = 2;
   scoreDisplay.textContent = score;
+  
   generateObstacles();
   generateTacos();
   
@@ -253,12 +256,25 @@ function update() {
   if (!isGameStarted) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // Fondo
+  // Fondo en bucle horizontal
   if (currentLevel === 2) {
-    ctx.drawImage(images.background2, 0, 0, canvas.width, canvas.height);
+    bgOffset2 -= gameSpeed/2;
+    if (bgOffset2 <= -canvas.width) bgOffset2 = 0;
+    ctx.drawImage(images.background2, bgOffset2, 0, canvas.width, canvas.height);
+    ctx.drawImage(images.background2, bgOffset2 + canvas.width, 0, canvas.width, canvas.height);
   } else {
-    ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
+    bgOffset -= gameSpeed/2;
+    if (bgOffset <= -canvas.width) bgOffset = 0;
+    ctx.drawImage(images.background, bgOffset, 0, canvas.width, canvas.height);
+    ctx.drawImage(images.background, bgOffset + canvas.width, 0, canvas.width, canvas.height);
   }
+  
+  // Piso en bucle
+  floorOffset -= gameSpeed;
+  if (floorOffset <= -canvas.width) floorOffset = 0;
+  ctx.fillStyle = "#654321";
+  ctx.fillRect(floorOffset, canvas.height - 50, canvas.width, 50);
+  ctx.fillRect(floorOffset + canvas.width, canvas.height - 50, canvas.width, 50);
   
   // Obstáculos del piso
   obstacles.forEach(obstacle => {
@@ -336,7 +352,7 @@ function update() {
           if (type === 'fire') spawnedMeteorFire++;
           else spawnedMeteorSimple++;
         } else if (type === 'NFL' || type === 'FUTBOL') {
-          const reducedSize = 525 * 0.4 * scaleFactor; // 210 * scaleFactor
+          const reducedSize = 525 * 0.4 * scaleFactor;
           obs.x = canvas.width / 2 - reducedSize / 2;
           obs.y = canvas.height + Math.random() * 200;
           obs.width = reducedSize;
@@ -413,11 +429,8 @@ function update() {
     player.isJumping = false;
   }
   
-  if (player.isJumping) {
-    player.rotation += 5;
-  } else {
-    player.rotation = 0;
-  }
+  if (player.isJumping) player.rotation += 5;
+  else player.rotation = 0;
   
   let playerImg;
   if (selectedCharacter === "juanito") playerImg = images.player1;
@@ -473,10 +486,7 @@ function levelComplete() {
   isGameStarted = false;
   cancelAnimationFrame(animationFrameId);
   document.getElementById('final-score').textContent = score;
-  if (currentLevel === 2) {
-    nextLevelButton.textContent = "MENU";
-  } else {
-    nextLevelButton.textContent = "Siguiente Nivel";
-  }
+  if (currentLevel === 2) nextLevelButton.textContent = "MENU";
+  else nextLevelButton.textContent = "Siguiente Nivel";
   levelCompleteScreen.style.display = 'flex';
 }

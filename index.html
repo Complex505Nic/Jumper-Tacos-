@@ -13,25 +13,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Geometry Dash Style Game - Niveles</title>
+  <title>Geometry Dash Style Game - Horizontal</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Pantalla de inicio -->
+  <!-- Pantalla de inicio (sin cambios de escala) -->
   <div id="start-screen">
     <div class="input-container">
       <input type="text" id="player-name" placeholder="Ingresa tu nombre">
       <div class="buttons-container">
-        <!-- Sólo se muestra el botón de "PERSONAJES" -->
+        <!-- Solo se muestra el botón de "PERSONAJES" -->
         <button id="select-characters">PERSONAJES</button>
       </div>
     </div>
   </div>
 
-  <!-- Pantalla de selección de personajes -->
+  <!-- Pantalla de selección de personajes (sin cambios de escala) -->
   <div id="character-screen">
     <div class="input-container">
-      <!-- Fila con los personajes originales -->
       <div class="characters-grid first-row">
         <div class="character-item">
           <img src="https://images4.imagebam.com/0a/51/d3/MEZR6J6_o.png" alt="JUANITO" class="new-character" data-character="juanito">
@@ -42,7 +41,6 @@
           <span>CHONA</span>
         </div>
       </div>
-      <!-- Fila con otros personajes -->
       <div class="characters-grid second-row">
         <div class="character-item">
           <img src="https://images4.imagebam.com/df/99/a5/MEZS853_o.png" alt="CUTTIE" class="new-character" data-character="cuttie">
@@ -59,7 +57,6 @@
           <span>CRAZY FLAMES</span>
         </div>
       </div>
-      <!-- Botones de la selección -->
       <div class="btn-container">
         <button id="back-to-start">Volver</button>
         <button id="enter-game">Entrar al Juego</button>

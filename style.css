@@ -9,7 +9,7 @@ canvas {
   display: block;
 }
 
-/* Pantallas de inicio y selección (sin escalado, iguales) */
+/* Pantallas de inicio y selección (sin escalado) */
 #start-screen, #character-screen {
   position: absolute;
   top: 0;
